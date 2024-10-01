@@ -1,0 +1,13 @@
+[GLOBAL]
+pants_version = "2.22.0"
+backend_packages = ["pants.backend.python"]
+
+[python]
+enable_resolves = true
+interpreter_constraints = ["CPython==3.12.*"]
+
+[python.resolves_to_constraints_file]
+"python-default" = "requirements.txt"
+
+[source]
+root_patterns = ["/", "/watch/src/python/src"]
