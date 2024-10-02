@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import pandas as pd
+from .session import Session
 
 
 @dataclass
@@ -15,6 +16,6 @@ class Relation:
     traceback: str
     git_metadata: GitMetadata
 
-    def as_rustlike(self):
-        """Transform the relation into a rust compatible type"""
-        pass
+    @classmethod
+    def from_session(cls, session: Session):
+        return cls("this", "that", "abc")

@@ -1,8 +1,10 @@
 import tomllib
 from dataclasses import dataclass
-from singleton import Singleton
+from .singleton import Singleton
 
 GEOMETRA_TOML = "geometra.toml"
+
+__all__ = ["Configuration"]
 
 
 @dataclass

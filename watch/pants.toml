@@ -10,4 +10,4 @@ interpreter_constraints = ["CPython==3.12.*"]
 "python-default" = "requirements.txt"
 
 [source]
-root_patterns = ["/", "/watch/src/python/src"]
+root_patterns = ["/", "/src/interface/python/src"]
