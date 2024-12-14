@@ -1,7 +1,4 @@
-python_sources(
-    name="root",
-)
-
 python_requirements(
-    name="reqs0",
+    name="root",
+    source="pyproject.toml",
 )

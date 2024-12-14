@@ -1,13 +1,17 @@
 [GLOBAL]
 pants_version = "2.22.0"
-backend_packages = ["pants.backend.python"]
+backend_packages = [
+    "pants.backend.python",
+    "pants.backend.experimental.python.lint.ruff.check",
+    "pants.backend.experimental.python.lint.ruff.format",
+]
 
 [python]
 enable_resolves = true
 interpreter_constraints = ["CPython==3.12.*"]
 
-[python.resolves_to_constraints_file]
-"python-default" = "requirements.txt"
-
 [source]
-root_patterns = ["/", "/src/interface/python/src"]
+root_patterns = ["/"]
+
+[cli.alias]
+test-all = "test --debug tests::"

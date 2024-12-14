@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "geometra"
-# authors = [{ name = "Stefan Dalecki", email = "sjdalecki@gmail.com" }]name = "geometra"
+# authors = [{ name = "Stefan Dalecki", email = "sjdalecki@gmail.com" }]
 description = "All `geometra` products and services"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,5 +12,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["pandas>=2.2"]
-dynamic = ["version"]
+
+
+dependencies = ["pandas~=2.2", "varname~=0.13"]
