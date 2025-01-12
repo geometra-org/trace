@@ -1,41 +1,36 @@
-from .singleton import Singleton
-from dataclasses import dataclass
-from .type_mods.dictionary import swap_dict_key_values
+from .type_mods.singleton import Singleton
+from .trace import Trace
+
+# from .plan import Plan
+from .summary import Summarizer
 import atexit
 import pathlib
-import asyncio
+from .type_mods.dictionary import swap_dict_key_values
 import inspect
+from typing import TypeVar
 import os
 
+T = TypeVar("T")
 
-def getWatcher():
+
+def getWatcher() -> Watcher:
     return Watcher()
 
 
-@dataclass
-class Traceable:
-    key: str
-    value: object
-
 class Watcher(metaclass=Singleton):
     SCHEMA_SEP = "."
-    _queue: list[Traceable] = []
-    _traces: set[Traceable] = set()
+    _traces: set[Trace] = set()
 
     def __init__(self):
         self._register_exit()
-        
+
     def _register_exit(self):
         atexit.register(self.summarize)
 
-    def add(self, value: object):
-        """Add a new variabe to track and optionally push its comparison to the queue"""
+    def add(self, value: T, expected: T | None):
+        """Add a new variabe to track with optional expected comparision"""
         uid = self.make_unique_id(value)
-        trace = Traceable(uid, value)
-        pass
-
-    def add_trace(self, trace: Traceable) -> None:
-        self._queue += [trace]
+        trace = Trace(uid, value, expected)
         self._traces.add(trace)
 
     def make_unique_id(self, value: object) -> str:
@@ -58,10 +53,6 @@ class Watcher(metaclass=Singleton):
 
         return self.SCHEMA_SEP.join(components)
 
-    async def
-
     def summarize(self):
-        pass
-    
-@dataclass
-class Queue:
+        summary = Summarizer(self._traces)
+        breakpoint()

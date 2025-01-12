@@ -1,4 +1,4 @@
-from src.watcher import Watcher
+from src.logic.watcher import Watcher
 
 
 def test_something():
