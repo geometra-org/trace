@@ -1,5 +1,5 @@
-from typing import TypeVar
 from dataclasses import dataclass
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -12,6 +12,9 @@ class Trace:
 
     def __str__(self):
         return self.key
+
+    def __hash__(self):
+        return hash(self.key)
 
     def assert_expected(self) -> bool:
         """Compares the actual value to the expected

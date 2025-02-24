@@ -163,4 +163,5 @@ cython_debug/
 
 # Pants workspace files
 /.pants.d
+/.pants_cache
 /dist/

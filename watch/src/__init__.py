@@ -1,1 +1,1 @@
-from .logic.watcher import getWatcher
+from .watcher import getWatcher

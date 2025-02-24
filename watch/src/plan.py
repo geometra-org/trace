@@ -1,11 +1,6 @@
 from dataclasses import dataclass
+
 from .type_mods.singleton import Singleton
-from enum import StrEnum
-
-
-class Dtypes(StrEnum):
-    CSV = auto()
-    JSON = auto()
 
 
 @dataclass

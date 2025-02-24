@@ -1,10 +1,12 @@
 [GLOBAL]
-pants_version = "2.22.0"
+pants_version = "2.24.2"
 backend_packages = [
     "pants.backend.python",
     "pants.backend.experimental.python.lint.ruff.check",
     "pants.backend.experimental.python.lint.ruff.format",
 ]
+local_cache = true
+# remote_store_address = "azure/address:port"
 
 [python]
 enable_resolves = true

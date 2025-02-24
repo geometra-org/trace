@@ -1,4 +1,6 @@
 class Singleton(type):
+    """Reusable singleton implementation"""
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs):

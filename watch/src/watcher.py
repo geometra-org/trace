@@ -1,20 +1,16 @@
-from .type_mods.singleton import Singleton
-from .trace import Trace
+import atexit
+import inspect
+import os
+import pathlib
+from typing import TypeVar
 
 # from .plan import Plan
 from .summary import Summarizer
-import atexit
-import pathlib
+from .trace import Trace
 from .type_mods.dictionary import swap_dict_key_values
-import inspect
-from typing import TypeVar
-import os
+from .type_mods.singleton import Singleton
 
 T = TypeVar("T")
-
-
-def getWatcher() -> Watcher:
-    return Watcher()
 
 
 class Watcher(metaclass=Singleton):
@@ -25,6 +21,7 @@ class Watcher(metaclass=Singleton):
         self._register_exit()
 
     def _register_exit(self):
+        """When the program exits, summarize the traces"""
         atexit.register(self.summarize)
 
     def add(self, value: T, expected: T | None):
@@ -37,11 +34,12 @@ class Watcher(metaclass=Singleton):
         """Generate a unique mapping key based on the "add"-ed value
 
         Args:
+            value: any object to track
 
         Returns:
             str: hashable key for mapping
         """
-        caller = inspect.stack()[2]
+        caller = inspect.stack()[2]  # Caller's frame is always two above
 
         pure_path = pathlib.PurePath(caller.filename)
         rel_path = pure_path.relative_to(os.getcwd())
@@ -54,5 +52,9 @@ class Watcher(metaclass=Singleton):
         return self.SCHEMA_SEP.join(components)
 
     def summarize(self):
-        summary = Summarizer(self._traces)
-        breakpoint()
+        """Summarize all the traces"""
+        return Summarizer(self._traces)
+
+
+def getWatcher() -> Watcher:
+    return Watcher()
