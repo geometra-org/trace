@@ -10,7 +10,7 @@ local_cache = true
 
 [python]
 enable_resolves = true
-interpreter_constraints = ["CPython==3.12.*"]
+interpreter_constraints = ["CPython==3.13.*"]
 
 [source]
 root_patterns = ["/"]
