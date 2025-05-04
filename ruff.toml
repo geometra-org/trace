@@ -1,0 +1,37 @@
+target-version = "py313"
+
+line-length = 88
+
+[format]
+quote-style = "double"
+
+[lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # Pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "A",   #flake8-builtins
+    "S",   # flake8-bandit
+    "T",   # flake8-debugger
+    "SIM", # flake8-simplify
+    "I",   # isort
+    "ERA", # eradicate
+    "RUF", # ruff specific
+    "D",   #pydocstyle
+]
+
+ignore = [
+    "D100", # package doc strings
+    "D104", # module doc strings
+    "F403", # star imports
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.pycodestyle]
+max-doc-length = 88
