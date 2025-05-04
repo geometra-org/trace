@@ -10,6 +10,6 @@ from src.type_mods import dictionary as module
     ],
 )
 def test_swap_dict_key_values(input_dict: dict, expected_output: dict):
-    """module.swap_dict_key_values"""
+    """type_mods.swap_dict_key_values."""
     actual_output = module.swap_dict_key_values(input_dict)
     assert actual_output == expected_output

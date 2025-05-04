@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.24.2"
+pants_version = "2.25.0"
 backend_packages = [
     "pants.backend.python",
     "pants.backend.experimental.python.lint.ruff.check",
