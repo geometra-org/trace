@@ -29,7 +29,7 @@ body:
     id: related-features
     attributes:
       label: Related Features
-      description: Please describe any related features you would like to see?
+      description: Please describe any current features that fall short of your desired functionality.
       placeholder: I want free candy
       value: While there currently is <x>, I would like to see expanded versatility with regard to <y>.
     validations:
