@@ -1,0 +1,52 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+projects: ["trace"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: email.@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Please include what you expected to happen?
+      placeholder: expectation vs. reality
+      value: "I did 'x' and saw 'y' instead of 'z'."
+    validations:
+      required: true
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: What python version were you using?
+      options:
+        - "3.13"
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: library-version
+    attributes:
+      label: What version of 'trace' were you using?
+      description: Please specify which version/tag you were using.
+      placeholder: x.y.z
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please include any relevant shell output.
+      render: shell
+    validations:
+      required: false

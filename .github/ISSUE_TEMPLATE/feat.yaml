@@ -1,0 +1,36 @@
+name: Feature Request
+description: File a feature request.
+title: "[Feat]: "
+labels: ["feat", "feature"]
+projects: ["trace"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: email.@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: What would you like to see new?
+      description: Please describe your newly desired functionality?
+      placeholder: I got a great idea for...
+      value: It would help me if...
+    validations:
+      required: true
+  - type: textarea
+    id: related-features
+    attributes:
+      label: Related Features
+      description: Please describe any related features you would like to see?
+      placeholder: I want free candy
+      value: While there currently is <x>, I would like to see expanded versatility with regard to <y>.
+    validations:
+      required: false
