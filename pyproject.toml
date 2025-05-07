@@ -10,7 +10,7 @@ name = "geometra"
 version = "1.0.0"
 authors = [
     { name = "Stefan Dalecki", email = "daleckidev@gmail.com" },
-    { name = "Dan Kilcullen", email = "dkilcullen25@gmail.com" },
+    { name = "Dan Kilcullen", email = "devcullen@proton.me" },
 ]
 description = "All `geometra` products and services"
 readme = "README.md"
