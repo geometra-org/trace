@@ -1,13 +1,15 @@
-# ---My PR Title---
-
-## Summary
-
 Any PR title can be optionally prefixed with `breaking|` and must include one of `{ feat | fix | refactor  | tests | chore }` followed by a `colon` and `brief description`.
 
 Examples:
 * refactor: I am rearranging methods and modules
 * fix: I found a bug and resolved it
 * breaking|feat: I've got big changes and there is no going back
+
+# ---My PR---
+
+Include a brief and descriptive header for your pull request.
+
+## Summary
 
 Please proivde a 1-2 sentence summary of your changes and link your relevant Jira issue (if applicable).
 
