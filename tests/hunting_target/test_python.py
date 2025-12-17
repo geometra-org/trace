@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from src import target as module
+from src.hunting_target import python as module
 
 
-class TestTarget:
-    """src.target.Target."""
+class TestPyTarget:
+    """src.hunting_target.python.PyTarget."""
 
-    test_cls = module.Target
+    test_cls = module.PyTarget
 
     @pytest.mark.parametrize(
         "returns, error, context",
@@ -40,11 +40,13 @@ class TestTarget:
         error: str,
         context: AbstractContextManager,
     ):
-        """src.target.Target.check_returns_and_error."""
+        """src.hunting_target.python.PyTarget.check_returns_and_error."""
         with context:
             _ = self.test_cls(
                 name="test_target",
-                project="Test target",
+                project="Test Project",
+                team="Test Team",
+                version="1.0.0",
                 module_path=Path(),
                 method_name="test_method",
                 line_no=1,

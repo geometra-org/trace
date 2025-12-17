@@ -1,0 +1,4 @@
+# ONLY FOR TESTING PURPOSES
+[tool.pyhunters]
+project = "PYPROJECT.TOML - TEST PROJECT"
+team = "PYPROJECT.TOML - TEST TEAM"

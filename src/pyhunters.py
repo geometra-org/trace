@@ -1,43 +1,55 @@
 import atexit
 import inspect
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Self
 
-from src.settings.build_root import PyHuntersConfig
-from src.target import Target
-from src.type_mods.singleton import Singleton
+from src.hunting_target.python import PyTarget
+from src.settings.config import HuntingParty, rally_hunting_party
 
-__all__ = ["PyHunters", "getPyHunters"]
-
-config = PyHuntersConfig.initialize()
+__all__ = ["PyHunters"]
 
 
 @dataclass
-class PyHunters(metaclass=Singleton):
+class PyHunters:
     """Class for adding and managing marks."""
 
+    config: HuntingParty | None = None
     team: str | None = None
     project: str | None = None
+    version: str | None = None
 
     def __post_init__(self):
         """Ensure that the exit handler is registered."""
-        if not self.team:
-            self.team = config.team
-        if not self.project:
-            self.project = config.project
-        self.targets: list[Target] = []
+        self.config = self.config or rally_hunting_party()
+        self.targets = []
         self._register_exit()
 
     def __iter__(self):
         """Iterate through all the marks."""
         return iter(self.targets)
 
-    def __getitem__(self, key: str) -> Target:
+    def __getitem__(self, key: str) -> PyTarget:
         """Get a `Target` by name."""
         return self._map[key]
 
-    def get(self, name: str, *, default: Target | None = None) -> Target | None:
+    @cached_property
+    def _project(self):
+        """Get the project name."""
+        return self.project or self.config.project
+
+    @cached_property
+    def _team(self):
+        """Get the team name."""
+        return self.team or self.config.team
+
+    @cached_property
+    def _version(self):
+        """Get the version name."""
+        return self.version or self.config.version
+
+    def get(self, name: str, *, default: PyTarget | None = None) -> PyTarget | None:
         """Get a `Target` by name, or None if not found."""
         try:
             return self._map[name]
@@ -53,9 +65,9 @@ class PyHunters(metaclass=Singleton):
         """Get a dictionary mapping target names to targets."""
         return {target.name: target for target in self.targets}
 
-    def add(self, target: Target) -> Self:
+    def add(self, target: PyTarget) -> Self:
         """Add a target to the collection."""
-        if not isinstance(target, Target):
+        if not isinstance(target, PyTarget):
             raise TypeError(f"Expected Target, got {type(target)}.")
         self.targets += [target]
         return self
@@ -69,7 +81,14 @@ class PyHunters(metaclass=Singleton):
         caller = inspect.stack()[1]
         module_path = Path(caller.filename)
         line_no = caller.lineno + 1
-        mark_kwargs = {"name": name, "module_path": module_path, "line_no": line_no}
+        mark_kwargs = {
+            "name": name,
+            "project": self._project,
+            "team": self._team,
+            "version": self._version,
+            "module_path": module_path,
+            "line_no": line_no,
+        }
 
         def inner(func):
             method_name = func.__name__
@@ -83,22 +102,15 @@ class PyHunters(metaclass=Singleton):
                     returns = func(*args, **kwargs)
                 except Exception as exc:
                     mark_kwargs["error"] = exc
-                    self.add(Target(**mark_kwargs))
+                    mark_kwargs["returns"] = None
+                    self.add(PyTarget(**mark_kwargs))
                     raise exc
+                mark_kwargs["error"] = None
                 mark_kwargs["returns"] = returns
-                target = Target.model_validate(mark_kwargs)
+                target = PyTarget.model_validate(mark_kwargs)
                 self.add(target)
                 return returns
 
             return wrapper
 
         return inner
-
-
-def getPyHunters(*, team: str | None = None, project: str | None = None) -> PyHunters:
-    """Create or get the singleton `PyHunters` instance."""
-    if not team:
-        team = config.team
-    if not project:
-        project = config.project
-    return PyHunters(project=project)

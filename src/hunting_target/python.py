@@ -1,64 +1,27 @@
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Self
+from typing import Self
 
-from pydantic import (
-    BaseModel,
-    model_validator,
-)
-from pydantic_core import core_schema
+from pydantic import BaseModel, ConfigDict, model_validator
 
-from src.settings.build_root import PyHuntersConfig
-
-__all__ = ["Target"]
-
-config = PyHuntersConfig.initialize()
+__all__ = ["PyTarget"]
 
 
-class Error:
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls,
-        _source_type: Any,
-        _handler: Callable[[Any], core_schema.CoreSchema],
-    ) -> core_schema.CoreSchema:
-        """Generates pydantic schema based on `Version` type in `semver`."""
-
-        def make_str(value: Exception) -> str:
-            """Convert an exception to a string representation.
-
-            ValueError("this") -> "ValueError('this')"
-            """
-            return value.__repr__()
-
-        def validate_from_str(value: str) -> Exception:
-            """Evaluate a string as an exception.
-
-            "ValueError('this')" -> ValueError("this")
-            """
-            return eval(value)  # noqa: S307
-
-        return core_schema.json_or_python_schema(
-            json_schema=core_schema.no_info_plain_validator_function(validate_from_str),
-            python_schema=core_schema.is_instance_schema(
-                Exception
-            ),  # verify is Exception
-            serialization=core_schema.plain_serializer_function_ser_schema(make_str),
-        )
-
-
-class Target(BaseModel):
+class PyTarget(BaseModel):
     """A targetable, trackable object for comparison over time in storage."""
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     name: str
-    project: str = config.project
+    project: str
+    team: str
+    version: str
     module_path: Path
     method_name: str
     line_no: int
     args: tuple[object, ...]
     kwargs: dict[str, object]
-    returns: object | None = None
-    error: Error | None = None
+    returns: object | None
+    error: Exception | None
 
     @model_validator(mode="after")
     def check_returns_and_error(self) -> Self:
@@ -78,20 +41,27 @@ class Target(BaseModel):
         if self.error is None != other.error is None:
             return False
 
+        errors_match = (
+            type(self.error) is type(other.error) if self.error is not None else True
+        )
+        error_args_match = (
+            getattr(self.error, "args", None) == getattr(other.error, "args", None)
+            if self.error is not None
+            else True
+        )
         return (
             self.project == other.project
             and self.name == other.name
+            and self.team == other.team
+            and self.version == other.version
             and self.module_path == other.module_path
             and self.method_name == other.method_name
             and self.line_no == other.line_no
             and self.args == other.args
             and self.kwargs == other.kwargs
             and self.returns == other.returns
-            and type(self.error) is type(other.error)
-            if self.error is not None
-            else True and self.error.args == other.error.args
-            if self.error is not None
-            else True
+            and errors_match
+            and error_args_match
         )
 
     @property
