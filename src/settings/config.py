@@ -1,3 +1,4 @@
+import logging
 import tomllib
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -5,8 +6,11 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, ClassVar, Self
 
+from src.lumber import DEFAULT_INDENT, LOG_PREFIX
 from src.settings.build_root import get_build_root
 from src.type_mods.singleton import Singleton
+
+logger = logging.getLogger(__name__)
 
 ATTRS = ["project", "team", "version"]
 INIT_KWARGS = {attr: None for attr in ATTRS}
@@ -25,12 +29,29 @@ class SupportedTomls(StrEnum):
 
 
 @dataclass(frozen=True)
-class TomlConfig(metaclass=Singleton):
-    """Guide-ing params for setting up a Teaumehl object."""
+class ConfigParams:
+    """All available fields in all toml file options."""
 
     project: str | None
     team: str | None
     version: str | None
+    save_result: bool | None
+
+
+class TomlConfig(ConfigParams, metaclass=Singleton):
+    """Guide-ing params for setting up a Teaumehl object."""
+
+    filename: ClassVar[SupportedTomls]
+
+    def __post_init__(self):
+        """Log the created toml."""
+        logger.info(
+            f"{LOG_PREFIX}: Parsed `{self.filename}`:\n"
+            f"{DEFAULT_INDENT}project     -> {self.project}\n"
+            f"{DEFAULT_INDENT}team        -> {self.team}\n"
+            f"{DEFAULT_INDENT}version     -> {self.version}\n"
+            f"{DEFAULT_INDENT}save_result -> {self.save_result}\n"
+        )
 
     @classmethod
     @abstractmethod
@@ -41,26 +62,23 @@ class TomlConfig(metaclass=Singleton):
 class PyHuntersToml(TomlConfig):
     """Guide-ing params for setting up a Teaumehl object."""
 
-    project: str | None
-    team: str | None
-    version: str | None
+    filename: ClassVar[SupportedTomls] = SupportedTomls.PYHUNTERS
 
     @classmethod
     def parse(cls, toml: dict[str, Any]) -> Self:
         """Parse, looking at top level keys."""
-        return cls(
-            project=toml.get("project"),
-            team=toml.get("team"),
-            version=toml.get("version"),
-        )
+        init_kwargs = INIT_KWARGS.copy()
+
+        for key in ATTRS:
+            init_kwargs[key] = toml.get(key)
+
+        return cls(**init_kwargs)
 
 
 class PyProjectToml(TomlConfig):
     """Guide-ing params for setting up a Teaumehl object."""
 
-    project: str | None
-    team: str | None
-    version: str | None
+    filename: ClassVar[SupportedTomls] = SupportedTomls.PYPROJECT
 
     @classmethod
     def parse(cls, toml: dict[str, Any]) -> Self:
@@ -86,7 +104,7 @@ class PyProjectToml(TomlConfig):
 
 
 @dataclass(frozen=True)
-class HuntingParty(metaclass=Singleton):
+class HuntingParty(ConfigParams, metaclass=Singleton):
     """Conveniently create a Toml object."""
 
     @dataclass
@@ -105,10 +123,6 @@ class HuntingParty(metaclass=Singleton):
         ),
     }
 
-    project: str | None
-    team: str | None
-    version: str | None
-
     def __post_init__(self):
         """Ensure that no fields are `None`."""
         missing_fields = []
@@ -119,6 +133,13 @@ class HuntingParty(metaclass=Singleton):
             raise ValueError(
                 f"Could not parse required fields from toml files: {missing_fields}"
             )
+        logger.info(
+            f"{LOG_PREFIX}: Coerced toml files and defined final configuration:\n"
+            f"{DEFAULT_INDENT}project     -> {self.project}\n"
+            f"{DEFAULT_INDENT}team        -> {self.team}\n"
+            f"{DEFAULT_INDENT}version     -> {self.version}\n"
+            f"{DEFAULT_INDENT}save_result -> {self.save_result}\n"
+        )
 
     @classmethod
     def from_options(cls) -> Self:

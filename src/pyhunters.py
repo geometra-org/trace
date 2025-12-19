@@ -1,56 +1,78 @@
 import atexit
 import inspect
+import logging
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Self
 
 from src.hunting_target.python import PyTarget
+from src.lumber import LOG_PREFIX
 from src.settings.config import HuntingParty, rally_hunting_party
+from src.storage.driver import SQLDriver
 
 __all__ = ["PyHunters"]
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class PyHunters:
-    """Class for adding and managing marks."""
+    """Class for adding and managing targets."""
 
+    driver: SQLDriver | None = None
+
+    # defaults to `rally_hunting_party()`
     config: HuntingParty | None = None
+
+    # can provide overrides or fallback to config values (which are non-None)
+    # `version` cannot be overriden at this point
     team: str | None = None
     project: str | None = None
-    version: str | None = None
+
+    # toggle to save all targets
+    save_result: bool | None = None
 
     def __post_init__(self):
         """Ensure that the exit handler is registered."""
         self.config = self.config or rally_hunting_party()
+
+        # instantiate an empty list for all future targets
         self.targets = []
         self._register_exit()
 
     def __iter__(self):
-        """Iterate through all the marks."""
+        """Iterate through all the targets."""
         return iter(self.targets)
 
     def __getitem__(self, key: str) -> PyTarget:
         """Get a `Target` by name."""
         return self._map[key]
 
+    def __len__(self) -> int:
+        """Return the number of targets."""
+        return len(self.targets)
+
+    # cached properties identify an override or fallback to config default
     @cached_property
-    def _project(self):
+    def _project(self) -> str:
         """Get the project name."""
         return self.project or self.config.project
 
     @cached_property
-    def _team(self):
+    def _team(self) -> str:
         """Get the team name."""
         return self.team or self.config.team
 
     @cached_property
-    def _version(self):
-        """Get the version name."""
-        return self.version or self.config.version
+    def _version(self) -> str:
+        """Get the version name.
+
+        This is cannot be overwritten and is tied to the config.
+        """
+        return self.config.version
 
     def get(self, name: str, *, default: PyTarget | None = None) -> PyTarget | None:
-        """Get a `Target` by name, or None if not found."""
+        """Get a `PyTarget` by name, or default if not found."""
         try:
             return self._map[name]
         except KeyError:
@@ -63,23 +85,39 @@ class PyHunters:
     @property
     def _map(self):
         """Get a dictionary mapping target names to targets."""
-        return {target.name: target for target in self.targets}
+        return {target.name: target for target in self}
 
     def add(self, target: PyTarget) -> Self:
         """Add a target to the collection."""
         if not isinstance(target, PyTarget):
             raise TypeError(f"Expected Target, got {type(target)}.")
         self.targets += [target]
+        logger.info(f"{LOG_PREFIX}: Successfully marked target: {target}")
         return self
 
     def summarize(self):
         """Summarize all targets."""
-        pass
+        logger.info(f"{LOG_PREFIX}: Marked `{len(self)}` targets.")
+        match self.save_result:
+            case True:
+                logger.info(
+                    f"{LOG_PREFIX}: 'Saving' (i.e. `save_results`) is toggled ON"
+                    " (i.e. `True`), targets WILL be saved."
+                )
+                self.driver.save_many(self.targets)
 
-    def mark(self, name: str):
-        """Simple interface for adding a marker."""
+            case False:
+                logger.info(
+                    f"{LOG_PREFIX}: 'Saving' (i.e. `save_results`) is toggle OFF"
+                    " (i.e. `False`), targets WILL NOT be saved."
+                )
+
+    def mark(self, *, name: str):
+        """Simple interface for marking a target."""
         caller = inspect.stack()[1]
         module_path = Path(caller.filename)
+
+        # increment the line number by '1' to grab the correct line
         line_no = caller.lineno + 1
         mark_kwargs = {
             "name": name,
@@ -107,8 +145,7 @@ class PyHunters:
                     raise exc
                 mark_kwargs["error"] = None
                 mark_kwargs["returns"] = returns
-                target = PyTarget.model_validate(mark_kwargs)
-                self.add(target)
+                self.add(PyTarget(**mark_kwargs))
                 return returns
 
             return wrapper

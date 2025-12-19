@@ -1,7 +1,10 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, model_validator
+
+from src.lumber import DEFAULT_INDENT, LOG_PREFIX
 
 __all__ = ["PyTarget"]
 
@@ -22,6 +25,7 @@ class PyTarget(BaseModel):
     kwargs: dict[str, object]
     returns: object | None
     error: Exception | None
+    creation_time: datetime
 
     @model_validator(mode="after")
     def check_returns_and_error(self) -> Self:
@@ -50,8 +54,8 @@ class PyTarget(BaseModel):
             else True
         )
         return (
-            self.project == other.project
-            and self.name == other.name
+            self.name == other.name
+            and self.project == other.project
             and self.team == other.team
             and self.version == other.version
             and self.module_path == other.module_path
@@ -75,6 +79,22 @@ class PyTarget(BaseModel):
     def __hash__(self) -> int:
         """One (unique) `Target` to rule them all."""
         return hash(self.key)
+
+    def __str__(self) -> str:
+        """`PyTarget` as a string."""
+        return (
+            f"{LOG_PREFIX}: PyTarget: {self.name}\n"
+            f"{DEFAULT_INDENT}project     -> {self.project}\n"
+            f"{DEFAULT_INDENT}team        -> {self.team}\n"
+            f"{DEFAULT_INDENT}version     -> {self.version}\n"
+            f"{DEFAULT_INDENT}module_path -> {self.module_path}\n"
+            f"{DEFAULT_INDENT}method_name -> {self.method_name}\n"
+            f"{DEFAULT_INDENT}line_no     -> {self.line_no}\n"
+            f"{DEFAULT_INDENT}args        -> {self.args}\n"
+            f"{DEFAULT_INDENT}kwargs      -> {self.kwargs}\n"
+            f"{DEFAULT_INDENT}returns     -> {self.returns}\n"
+            f"{DEFAULT_INDENT}errors      -> {self.errors}\n"
+        )
 
     @property
     def error_raised(self) -> bool:

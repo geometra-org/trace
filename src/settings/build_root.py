@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
@@ -8,6 +9,7 @@ __all__ = ["get_build_root"]
 
 # ordered in priority
 root_files: list[str] = ["pyhunters.toml", "pyproject.toml"]
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,7 @@ class _BuildRoot(metaclass=Singleton):
                     f"looking for at least one file from {root_files} in the cwd "
                     "and its ancestors."
                 )
+        logger.info(f"PYHUNTERS: Build root identified at `{root}`.")
         return root
 
 

@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from src.hunting_target import python as module
+from src.target import python as module
 
 
 class TestPyTarget:
-    """src.hunting_target.python.PyTarget."""
+    """src.target.python.PyTarget."""
 
     test_cls = module.PyTarget
 
@@ -40,7 +40,7 @@ class TestPyTarget:
         error: str,
         context: AbstractContextManager,
     ):
-        """src.hunting_target.python.PyTarget.check_returns_and_error."""
+        """src.target.python.PyTarget.check_returns_and_error."""
         with context:
             _ = self.test_cls(
                 name="test_target",
