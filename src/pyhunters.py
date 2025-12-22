@@ -9,7 +9,8 @@ from typing import Self
 from src.hunting_target.python import PyTarget
 from src.lumber import LOG_PREFIX
 from src.settings.config import HuntingParty, rally_hunting_party
-from src.storage.driver import SQLDriver
+
+# from src.storage.driver import SQLDriver
 
 __all__ = ["PyHunters"]
 logger = logging.getLogger(__name__)
@@ -19,10 +20,9 @@ logger = logging.getLogger(__name__)
 class PyHunters:
     """Class for adding and managing targets."""
 
-    driver: SQLDriver | None = None
+    # driver: SQLDriver | None = None
 
-    # defaults to `rally_hunting_party()`
-    config: HuntingParty | None = None
+    config: HuntingParty = rally_hunting_party()
 
     # can provide overrides or fallback to config values (which are non-None)
     # `version` cannot be overriden at this point
@@ -31,11 +31,10 @@ class PyHunters:
 
     # toggle to save all targets
     save_result: bool | None = None
+    db_engines: bool | None = None
 
     def __post_init__(self):
         """Ensure that the exit handler is registered."""
-        self.config = self.config or rally_hunting_party()
-
         # instantiate an empty list for all future targets
         self.targets = []
         self._register_exit()
@@ -112,7 +111,7 @@ class PyHunters:
                     " (i.e. `False`), targets WILL NOT be saved."
                 )
 
-    def mark(self, *, name: str):
+    def mark(self, name: str):
         """Simple interface for marking a target."""
         caller = inspect.stack()[1]
         module_path = Path(caller.filename)

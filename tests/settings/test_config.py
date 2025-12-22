@@ -18,10 +18,16 @@ class TestPyHuntersToml:
             "project": "TEST PROJECT",
             "team": "TEST TEAM",
             "version": "TEST VERSION",
+            "save_result": True,
+            "db_engines": ["TEST ENGINE"],
         }
         actual_result = self.test_cls.parse(EXAMPLE_TOML)
         expected_result = self.test_cls(
-            project="TEST PROJECT", team="TEST TEAM", version="TEST VERSION"
+            project="TEST PROJECT",
+            team="TEST TEAM",
+            version="TEST VERSION",
+            save_result=True,
+            db_engines=["TEST ENGINE"],
         )
         assert actual_result == expected_result
 
@@ -39,12 +45,18 @@ class TestPyProjectToml:
                     "project": "TEST PROJECT",
                     "team": "TEST TEAM",
                     "version": "TEST VERSION",
+                    "save_result": True,
+                    "db_engines": ["TEST ENGINE"],
                 }
             }
         }
         actual_result = self.test_cls.parse(EXAMPLE_TOML)
         expected_result = self.test_cls(
-            project="TEST PROJECT", team="TEST TEAM", version="TEST VERSION"
+            project="TEST PROJECT",
+            team="TEST TEAM",
+            version="TEST VERSION",
+            save_result=True,
+            db_engines=["TEST ENGINE"],
         )
         assert actual_result == expected_result
 
@@ -59,33 +71,64 @@ class TestHuntingParty:
         [
             pytest.param(
                 module.PyProjectToml(
-                    project="OTHER PROJECT", team="OTHER TEAM", version="OTHER VERSION"
+                    project="OTHER PROJECT",
+                    team="OTHER TEAM",
+                    version="OTHER VERSION",
+                    save_result=True,
                 ),
                 module.PyHuntersToml(
-                    project="TEST PROJECT", team="TEST TEAM", version="TEST VERSION"
+                    project="TEST PROJECT",
+                    team="TEST TEAM",
+                    version="TEST VERSION",
+                    save_result=True,
                 ),
                 test_cls(
-                    project="TEST PROJECT", team="TEST TEAM", version="TEST VERSION"
+                    project="TEST PROJECT",
+                    team="TEST TEAM",
+                    version="TEST VERSION",
+                    save_result=True,
                 ),
                 id="override-populated",
             ),
             pytest.param(
-                module.PyProjectToml(project=None, team=None, version=None),
+                module.PyProjectToml(
+                    project=None,
+                    team=None,
+                    version=None,
+                    save_result=True,
+                ),
                 module.PyHuntersToml(
-                    project="TEST PROJECT", team="TEST TEAM", version="TEST VERSION"
+                    project="TEST PROJECT",
+                    team="TEST TEAM",
+                    version="TEST VERSION",
+                    save_result=True,
                 ),
                 test_cls(
-                    project="TEST PROJECT", team="TEST TEAM", version="TEST VERSION"
+                    project="TEST PROJECT",
+                    team="TEST TEAM",
+                    version="TEST VERSION",
+                    save_result=True,
                 ),
                 id="override-none",
             ),
             pytest.param(
-                module.PyProjectToml(project=None, team="OTHER TEAM", version=None),
+                module.PyProjectToml(
+                    project=None,
+                    team="OTHER TEAM",
+                    version=None,
+                    save_result=True,
+                ),
                 module.PyHuntersToml(
-                    project="TEST PROJECT", team=None, version="TEST VERSION"
+                    project="TEST PROJECT",
+                    team=None,
+                    version="TEST VERSION",
+                    save_result=True,
                 ),
                 test_cls(
-                    project="TEST PROJECT", team="OTHER TEAM", version="TEST VERSION"
+                    project="TEST PROJECT",
+                    team="OTHER TEAM",
+                    version="TEST VERSION",
+                    save_result=True,
                 ),
                 id="mixed-override",
             ),

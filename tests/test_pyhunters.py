@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from src import pyhunters as module
-from src.target.python import PyTarget
+from src.hunting_target.python import PyTarget
 
 TEST_TARGET = "test_target"
 

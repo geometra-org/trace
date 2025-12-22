@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.target import python as module
+from src.hunting_target import python as module
 
 
 class TestPyTarget:
@@ -28,7 +28,7 @@ class TestPyTarget:
             ),
             pytest.param(
                 (123,),
-                "ValueError()",
+                ValueError("this is bad"),
                 pytest.raises(ValueError),
                 id="invalid-both-returns-and-error",
             ),
@@ -37,7 +37,7 @@ class TestPyTarget:
     def test_check_returns_and_error(
         self,
         returns: tuple,
-        error: str,
+        error: Exception | None,
         context: AbstractContextManager,
     ):
         """src.target.python.PyTarget.check_returns_and_error."""

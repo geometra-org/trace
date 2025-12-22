@@ -2,3 +2,10 @@
 [tool.pyhunters]
 project = "PYPROJECT.TOML - TEST PROJECT"
 team = "PYPROJECT.TOML - TEST TEAM"
+
+[[tool.pyhunters.local]]
+save_result = true
+path = "data"
+
+[[tool.pyhunters.hosted]]
+engine = "PYPROJECT.TOML - TEST ENGINE"

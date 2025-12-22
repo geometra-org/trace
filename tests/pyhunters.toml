@@ -1,3 +1,11 @@
 # ONLY FOR TESTING PURPOSES
 project = "PYHUNTERS.TOML - TEST PROJECT"
 team = "PYHUNTERS.TOML - TEST TEAM"
+save_result = true
+db_engines = ["PYHUNTERS.TOML - TEST ENGINE"]
+
+[[local]]
+path = "data"
+
+[[hosted]]
+engine = "PYHUNTERS.TOML - TEST ENGINE"

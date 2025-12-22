@@ -12,7 +12,7 @@ from src.type_mods.singleton import Singleton
 
 logger = logging.getLogger(__name__)
 
-ATTRS = ["project", "team", "version"]
+ATTRS = ["project", "team", "version", "save_result", "db_engines"]
 INIT_KWARGS = {attr: None for attr in ATTRS}
 
 
@@ -35,7 +35,8 @@ class ConfigParams:
     project: str | None
     team: str | None
     version: str | None
-    save_result: bool | None
+    save_result: bool | None = None
+    db_engines: list[str] | None = None
 
 
 class TomlConfig(ConfigParams, metaclass=Singleton):
@@ -51,6 +52,7 @@ class TomlConfig(ConfigParams, metaclass=Singleton):
             f"{DEFAULT_INDENT}team        -> {self.team}\n"
             f"{DEFAULT_INDENT}version     -> {self.version}\n"
             f"{DEFAULT_INDENT}save_result -> {self.save_result}\n"
+            f"{DEFAULT_INDENT}db_engines  -> {self.db_engines}\n"
         )
 
     @classmethod
@@ -133,12 +135,18 @@ class HuntingParty(ConfigParams, metaclass=Singleton):
             raise ValueError(
                 f"Could not parse required fields from toml files: {missing_fields}"
             )
+        if self.save_results and not self.db_engines:
+            raise ValueError(
+                "Cannot save without at least one database engine (i.e. `db_engines`)"
+            )
+
         logger.info(
             f"{LOG_PREFIX}: Coerced toml files and defined final configuration:\n"
             f"{DEFAULT_INDENT}project     -> {self.project}\n"
             f"{DEFAULT_INDENT}team        -> {self.team}\n"
             f"{DEFAULT_INDENT}version     -> {self.version}\n"
             f"{DEFAULT_INDENT}save_result -> {self.save_result}\n"
+            f"{DEFAULT_INDENT}db_engines  -> {self.db_engines}\n"
         )
 
     @classmethod
@@ -162,6 +170,7 @@ class HuntingParty(ConfigParams, metaclass=Singleton):
                 if init_kwarg := getattr(toml, attr):
                     init_kwargs[attr] = init_kwarg
 
+        breakpoint()
         return cls(**init_kwargs)
 
     @classmethod

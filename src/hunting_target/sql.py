@@ -1,3 +1,5 @@
+import uuid
+from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 
@@ -11,6 +13,7 @@ __all__ = ["SQLTarget"]
 class SQLTarget(SQLModel, table=True):  # type: ignore[call-arg]
     """A targetable, trackable object for comparison over time in storage."""
 
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     project: str
     team: str
@@ -32,4 +35,4 @@ class SQLTarget(SQLModel, table=True):  # type: ignore[call-arg]
     @cached_property
     def filename(self) -> Path:
         """File name for saving, omitting a suffix."""
-        return Path(f"{self.name}_{self.creation_time}")
+        return Path(f"{self.project}_{self.team}_{self.version}")

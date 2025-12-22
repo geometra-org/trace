@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import UTC, datetime
+from functools import cached_property
 from pathlib import Path
 from typing import Self
 
@@ -12,8 +13,6 @@ __all__ = ["PyTarget"]
 class PyTarget(BaseModel):
     """A targetable, trackable object for comparison over time in storage."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     name: str
     project: str
     team: str
@@ -25,7 +24,22 @@ class PyTarget(BaseModel):
     kwargs: dict[str, object]
     returns: object | None
     error: Exception | None
-    creation_time: datetime
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @cached_property
+    def creation_time(self) -> datetime:
+        """When a PyTarget was created."""
+        return datetime.now(UTC)
+
+    @model_validator(mode="after")
+    def set_creation_time(self):
+        """Set the creation time.
+
+        Not much of a validator, just a way to set creation time
+        """
+        _ = self.creation_time
+        return self
 
     @model_validator(mode="after")
     def check_returns_and_error(self) -> Self:
@@ -92,8 +106,8 @@ class PyTarget(BaseModel):
             f"{DEFAULT_INDENT}line_no     -> {self.line_no}\n"
             f"{DEFAULT_INDENT}args        -> {self.args}\n"
             f"{DEFAULT_INDENT}kwargs      -> {self.kwargs}\n"
-            f"{DEFAULT_INDENT}returns     -> {self.returns}\n"
-            f"{DEFAULT_INDENT}errors      -> {self.errors}\n"
+            f"{DEFAULT_INDENT}return     -> {self.returns}\n"
+            f"{DEFAULT_INDENT}error      -> {self.error}\n"
         )
 
     @property
