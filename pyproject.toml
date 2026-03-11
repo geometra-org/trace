@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 
-dependencies = ["pandas~=2.2", "pydantic~=2.11", "varname~=0.13"]
+dependencies = ["pandas~=2.2", "pydantic~=2.11", "sqlmodel~=0.0", "varname~=0.13"]
 
 [dependency-groups]
 # Don't tag these since they aren't packaged

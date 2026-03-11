@@ -1,15 +1,27 @@
 from pathlib import Path
 
-from src import pyhunters as module
-from src.target import Target
+import pytest
 
-test_pyhunters = module.getPyHunters()
+from src import pyhunters as module
+from src.hunting_target.python import PyTarget
 
 TEST_TARGET = "test_target"
 
+CONFIG_KWARGS = {
+    "project": "TEST PROJECT",
+    "team": "TEST TEAM",
+    "version": "TEST VERSION",
+}
 
-def test_mark_no_args_no_return():
-    """src.core.PyHunters.mark.
+
+@pytest.fixture
+def test_pyhunters(mocker):
+    """Fixture for forming a PyHunters instance."""
+    return module.PyHunters(config=mocker.Mock(**CONFIG_KWARGS))
+
+
+def test_mark_no_args_no_return(test_pyhunters: module.PyHunters):
+    """src.pyhunters.PyHunters.mark.
 
     mark a method that uses no args and has no return
     """
@@ -20,12 +32,12 @@ def test_mark_no_args_no_return():
 
     test_method_no_args_no_return()
     actual_result = test_pyhunters[TEST_TARGET]
-    expected_result = Target(
+    expected_result = PyTarget(
         name=TEST_TARGET,
-        project="DEFAULT",
+        **CONFIG_KWARGS,
         module_path=Path(__file__),
         method_name="test_method_no_args_no_return",
-        line_no=18,
+        line_no=30,
         args=(),
         kwargs={},
         returns=None,
@@ -34,8 +46,8 @@ def test_mark_no_args_no_return():
     assert actual_result == expected_result
 
 
-def test_mark_no_args_w_return():
-    """src.core.PyHunters.mark.
+def test_mark_no_args_w_return(test_pyhunters: module.PyHunters):
+    """src.pyhunters.PyHunters.mark.
 
     mark a method that uses no args and has a return
     """
@@ -46,12 +58,12 @@ def test_mark_no_args_w_return():
 
     test_mark_no_args_w_return()
     actual_result = test_pyhunters[TEST_TARGET]
-    expected_result = Target(
+    expected_result = PyTarget(
         name=TEST_TARGET,
-        project="DEFAULT",
+        **CONFIG_KWARGS,
         module_path=Path(__file__),
         method_name="test_mark_no_args_w_return",
-        line_no=44,
+        line_no=56,
         args=(),
         kwargs={},
         returns=("this", "that"),
@@ -60,8 +72,8 @@ def test_mark_no_args_w_return():
     assert actual_result == expected_result
 
 
-def test_mark_w_args_w_return():
-    """src.core.PyHunters.mark.
+def test_mark_w_args_w_return(test_pyhunters: module.PyHunters):
+    """src.pyhunters.PyHunters.mark.
 
     mark a method that uses args and has a return
     """
@@ -74,12 +86,12 @@ def test_mark_w_args_w_return():
 
     test_method_w_args_w_return(5)
     actual_result = test_pyhunters[TEST_TARGET]
-    expected_result = Target(
+    expected_result = PyTarget(
         name=TEST_TARGET,
-        project="DEFAULT",
+        **CONFIG_KWARGS,
         module_path=Path(__file__),
         method_name="test_method_w_args_w_return",
-        line_no=71,
+        line_no=83,
         args=(5,),
         kwargs={},
         returns=15,
@@ -88,8 +100,8 @@ def test_mark_w_args_w_return():
     assert actual_result == expected_result
 
 
-def test_mark_w_kwargs_w_return():
-    """src.core.PyHunters.mark.
+def test_mark_w_kwargs_w_return(test_pyhunters: module.PyHunters):
+    """src.pyhunters.PyHunters.mark.
 
     mark a method that uses kwargs and has a return
     """
@@ -102,12 +114,12 @@ def test_mark_w_kwargs_w_return():
 
     test_mark_w_kwargs_w_return(number=5)
     actual_result = test_pyhunters[TEST_TARGET]
-    expected_result = Target(
+    expected_result = PyTarget(
         name=TEST_TARGET,
-        project="DEFAULT",
+        **CONFIG_KWARGS,
         module_path=Path(__file__),
         method_name="test_mark_w_kwargs_w_return",
-        line_no=99,
+        line_no=111,
         args=(),
         kwargs={"number": 5},
         returns=15,
@@ -116,8 +128,8 @@ def test_mark_w_kwargs_w_return():
     assert actual_result == expected_result
 
 
-def test_mark_no_args_w_raise():
-    """src.core.PyHunters.mark.
+def test_mark_no_args_w_raise(test_pyhunters: module.PyHunters):
+    """src.pyhunters.PyHunters.mark.
 
     mark a method that uses no args and raises an error
     """
@@ -130,12 +142,12 @@ def test_mark_no_args_w_raise():
         test_mark_no_args_w_raise()
     except Exception:
         actual_result = test_pyhunters[TEST_TARGET]
-        expected_result = Target(
+        expected_result = PyTarget(
             name=TEST_TARGET,
-            project="DEFAULT",
+            **CONFIG_KWARGS,
             module_path=Path(__file__),
             method_name="test_mark_no_args_w_raise",
-            line_no=126,
+            line_no=138,
             args=(),
             kwargs={},
             returns=None,

@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from src import target as module
+from src.hunting_target import python as module
 
 
-class TestTarget:
-    """src.target.Target."""
+class TestPyTarget:
+    """src.target.python.PyTarget."""
 
-    test_cls = module.Target
+    test_cls = module.PyTarget
 
     @pytest.mark.parametrize(
         "returns, error, context",
@@ -28,7 +28,7 @@ class TestTarget:
             ),
             pytest.param(
                 (123,),
-                "ValueError()",
+                ValueError("this is bad"),
                 pytest.raises(ValueError),
                 id="invalid-both-returns-and-error",
             ),
@@ -37,14 +37,16 @@ class TestTarget:
     def test_check_returns_and_error(
         self,
         returns: tuple,
-        error: str,
+        error: Exception | None,
         context: AbstractContextManager,
     ):
-        """src.target.Target.check_returns_and_error."""
+        """src.target.python.PyTarget.check_returns_and_error."""
         with context:
             _ = self.test_cls(
                 name="test_target",
-                project="Test target",
+                project="Test Project",
+                team="Test Team",
+                version="1.0.0",
                 module_path=Path(),
                 method_name="test_method",
                 line_no=1,

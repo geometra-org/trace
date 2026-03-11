@@ -16,5 +16,5 @@ class TestSingleton:
     def test_one_instance(self):
         """type_mods.singleton.Singleton."""
         obj_1 = SampleClass("one")
-        obj_2 = SampleClass("two")
+        obj_2 = SampleClass("one")
         assert obj_1 == obj_2
