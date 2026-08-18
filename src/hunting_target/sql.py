@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 
+import pandas as pd
 from sqlmodel import ARRAY, JSON, Column, Field, SQLModel, String
 
 from src.hunting_target.python import PyTarget
@@ -30,9 +31,14 @@ class SQLTarget(SQLModel, table=True):  # type: ignore[call-arg]
     @classmethod
     def from_pytarget(cls, pytarget: PyTarget):
         """Convert a PyTarget pydantic model to a SQL model."""
-        return cls(**pytarget.dict())
+        return cls(**pytarget.model_dump())
 
     @cached_property
     def filename(self) -> Path:
         """File name for saving, omitting a suffix."""
         return Path(f"{self.project}_{self.team}_{self.version}")
+
+    @cached_property
+    def as_df(self) -> pd.DataFrame:
+        """Return a pandas DataFrame representation of this target."""
+        return pd.DataFrame([self.model_dump()])

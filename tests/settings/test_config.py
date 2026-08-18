@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from src.settings import config as module
+from src.storage.config import LocalConfig
 
 test_path = Path(__file__)
 
@@ -18,16 +19,14 @@ class TestPyHuntersToml:
             "project": "TEST PROJECT",
             "team": "TEST TEAM",
             "version": "TEST VERSION",
-            "save_result": True,
-            "db_engines": ["TEST ENGINE"],
+            "local": [{"path": "TEST PATH"}],
         }
         actual_result = self.test_cls.parse(EXAMPLE_TOML)
         expected_result = self.test_cls(
             project="TEST PROJECT",
             team="TEST TEAM",
             version="TEST VERSION",
-            save_result=True,
-            db_engines=["TEST ENGINE"],
+            local_driver=LocalConfig(save_dir=Path("TEST PATH")),
         )
         assert actual_result == expected_result
 
@@ -45,8 +44,7 @@ class TestPyProjectToml:
                     "project": "TEST PROJECT",
                     "team": "TEST TEAM",
                     "version": "TEST VERSION",
-                    "save_result": True,
-                    "db_engines": ["TEST ENGINE"],
+                    "local_driver": {"save_dir": "TEST PATH"},
                 }
             }
         }
@@ -55,8 +53,7 @@ class TestPyProjectToml:
             project="TEST PROJECT",
             team="TEST TEAM",
             version="TEST VERSION",
-            save_result=True,
-            db_engines=["TEST ENGINE"],
+            local_driver=LocalConfig(save_dir=Path("TEST PATH")),
         )
         assert actual_result == expected_result
 
@@ -74,19 +71,16 @@ class TestHuntingParty:
                     project="OTHER PROJECT",
                     team="OTHER TEAM",
                     version="OTHER VERSION",
-                    save_result=True,
                 ),
                 module.PyHuntersToml(
                     project="TEST PROJECT",
                     team="TEST TEAM",
                     version="TEST VERSION",
-                    save_result=True,
                 ),
                 test_cls(
                     project="TEST PROJECT",
                     team="TEST TEAM",
                     version="TEST VERSION",
-                    save_result=True,
                 ),
                 id="override-populated",
             ),
@@ -95,19 +89,16 @@ class TestHuntingParty:
                     project=None,
                     team=None,
                     version=None,
-                    save_result=True,
                 ),
                 module.PyHuntersToml(
                     project="TEST PROJECT",
                     team="TEST TEAM",
                     version="TEST VERSION",
-                    save_result=True,
                 ),
                 test_cls(
                     project="TEST PROJECT",
                     team="TEST TEAM",
                     version="TEST VERSION",
-                    save_result=True,
                 ),
                 id="override-none",
             ),
@@ -116,19 +107,16 @@ class TestHuntingParty:
                     project=None,
                     team="OTHER TEAM",
                     version=None,
-                    save_result=True,
                 ),
                 module.PyHuntersToml(
                     project="TEST PROJECT",
                     team=None,
                     version="TEST VERSION",
-                    save_result=True,
                 ),
                 test_cls(
                     project="TEST PROJECT",
                     team="OTHER TEAM",
                     version="TEST VERSION",
-                    save_result=True,
                 ),
                 id="mixed-override",
             ),

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
-from src.type_mods.singleton import Singleton
+from src.type_mods.singleton import SingletonMeta
 
 __all__ = ["get_build_root"]
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class _BuildRoot(metaclass=Singleton):
+class BuildRoot(metaclass=SingletonMeta):
     """Represents the global workspace build root."""
 
     class NotFoundError(Exception):
@@ -36,9 +36,9 @@ class _BuildRoot(metaclass=Singleton):
         return root
 
 
-def get_build_root() -> _BuildRoot:
+def get_build_root() -> BuildRoot:
     """Returns the build root for the current workspace.
 
     Defined separately for easy mocking.
     """
-    return _BuildRoot()
+    return BuildRoot()

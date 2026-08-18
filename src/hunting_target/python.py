@@ -13,10 +13,12 @@ __all__ = ["PyTarget"]
 class PyTarget(BaseModel):
     """A targetable, trackable object for comparison over time in storage."""
 
-    name: str
+    # Hunting Party defaults
     project: str
     team: str
     version: str
+    # Unique to target
+    name: str
     module_path: Path
     method_name: str
     line_no: int
@@ -106,8 +108,8 @@ class PyTarget(BaseModel):
             f"{DEFAULT_INDENT}line_no     -> {self.line_no}\n"
             f"{DEFAULT_INDENT}args        -> {self.args}\n"
             f"{DEFAULT_INDENT}kwargs      -> {self.kwargs}\n"
-            f"{DEFAULT_INDENT}return     -> {self.returns}\n"
-            f"{DEFAULT_INDENT}error      -> {self.error}\n"
+            f"{DEFAULT_INDENT}return      -> {self.returns}\n"
+            f"{DEFAULT_INDENT}error       -> {self.error}\n"
         )
 
     @property

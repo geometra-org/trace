@@ -4,7 +4,7 @@ from src.type_mods import singleton as module
 
 
 @dataclass
-class SampleClass(metaclass=module.Singleton):
+class SampleClass(metaclass=module.SingletonMeta):
     """placeholder."""
 
     name: str

@@ -1,7 +1,7 @@
 import atexit
 import inspect
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 from typing import Self
@@ -9,8 +9,6 @@ from typing import Self
 from src.hunting_target.python import PyTarget
 from src.lumber import LOG_PREFIX
 from src.settings.config import HuntingParty, rally_hunting_party
-
-# from src.storage.driver import SQLDriver
 
 __all__ = ["PyHunters"]
 logger = logging.getLogger(__name__)
@@ -20,23 +18,11 @@ logger = logging.getLogger(__name__)
 class PyHunters:
     """Class for adding and managing targets."""
 
-    # driver: SQLDriver | None = None
-
-    config: HuntingParty = rally_hunting_party()
-
-    # can provide overrides or fallback to config values (which are non-None)
-    # `version` cannot be overriden at this point
-    team: str | None = None
-    project: str | None = None
-
-    # toggle to save all targets
-    save_result: bool | None = None
-    db_engines: bool | None = None
+    config: HuntingParty = field(default_factory=rally_hunting_party)
+    targets: list[PyTarget] = field(default_factory=list)
 
     def __post_init__(self):
         """Ensure that the exit handler is registered."""
-        # instantiate an empty list for all future targets
-        self.targets = []
         self._register_exit()
 
     def __iter__(self):
@@ -55,12 +41,12 @@ class PyHunters:
     @cached_property
     def _project(self) -> str:
         """Get the project name."""
-        return self.project or self.config.project
+        return self.config.project
 
     @cached_property
     def _team(self) -> str:
         """Get the team name."""
-        return self.team or self.config.team
+        return self.config.team
 
     @cached_property
     def _version(self) -> str:
@@ -88,8 +74,6 @@ class PyHunters:
 
     def add(self, target: PyTarget) -> Self:
         """Add a target to the collection."""
-        if not isinstance(target, PyTarget):
-            raise TypeError(f"Expected Target, got {type(target)}.")
         self.targets += [target]
         logger.info(f"{LOG_PREFIX}: Successfully marked target: {target}")
         return self
@@ -97,19 +81,8 @@ class PyHunters:
     def summarize(self):
         """Summarize all targets."""
         logger.info(f"{LOG_PREFIX}: Marked `{len(self)}` targets.")
-        match self.save_result:
-            case True:
-                logger.info(
-                    f"{LOG_PREFIX}: 'Saving' (i.e. `save_results`) is toggled ON"
-                    " (i.e. `True`), targets WILL be saved."
-                )
-                self.driver.save_many(self.targets)
-
-            case False:
-                logger.info(
-                    f"{LOG_PREFIX}: 'Saving' (i.e. `save_results`) is toggle OFF"
-                    " (i.e. `False`), targets WILL NOT be saved."
-                )
+        for driver in self.config.drivers:
+            driver.save_many(self.targets)
 
     def mark(self, name: str):
         """Simple interface for marking a target."""

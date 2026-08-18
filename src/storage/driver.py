@@ -1,74 +1,110 @@
 import logging
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Self
 
 import pandas as pd
-from sqlmodel import Engine, Session, SQLModel
+from sqlalchemy import Engine, create_engine
+from sqlmodel import Session
 
 from src.hunting_target.sql import SQLTarget
-from src.settings.build_root import get_build_root
+from src.storage.config import LocalConfig, SQLAlchemyConfig
 
 logger = logging.getLogger(__name__)
-__all__ = ["SQLDriver"]
+__all__ = ["Driver", "LocalDriver", "MultiDriver", "SQLAlchemyDriver"]
 
 
 @dataclass
-class Saver(ABC):
+class Driver(ABC):
+    """Abstract base class for saving targets to storage."""
+
+    @classmethod
+    @abstractmethod
+    def from_config(cls, config) -> Self:
+        """Create a driver from a config."""
+
     @abstractmethod
     def save(self, target: SQLTarget) -> None:
         """Save a target to the desired path."""
 
     @abstractmethod
-    def save_many(self, targets: list[SQLTarget]) -> None:
+    def save_many(self, targets: Iterable[SQLTarget]) -> None:
         """Save multiple targets to the desired path."""
 
 
 @dataclass
-class Local(Saver):
-    _path: Path | None
+class LocalDriver(Driver):
+    """Local storage driver for saving SQL targets as csv files."""
 
-    def __post_init__(self):
-        """Use the build root path if no path is provided."""
-        if self._path is None:
-            self._path = get_build_root().path
+    save_dir: Path
+
+    @classmethod
+    def from_config(cls, config: LocalConfig) -> Self:
+        """Create a local DB driver from a config."""
+        return cls(save_dir=config.save_dir)
 
     def save(self, target: SQLTarget) -> None:
         """Save a target locally as a csv.
 
         This is sort-of inefficient since we are duplicating read operations.
         """
-        self._check_path(target)
-        current_df = self._load_current(target)
-        df = pd.DataFrame.from_records(target.to_dict())
-        combined_df = pd.concat([current_df, df])
-        sorted_df = combined_df.sort_values(by="creation_time", inplace=True)
-        sorted_df.to_csv(self.save_dir(target) / f"{target.filename}.csv")
+        self._check_path(target.filename)
+        current_df = self._load_current(target.filename)
+        combined_df = pd.concat([current_df, target.as_df])
+        sorted_df = combined_df.sort_values(by="creation_time")
+        sorted_df.to_csv(self.save_path(target.filename))
 
-    def save_many(self, targets: list[SQLTarget]) -> None:
-        """Save multiple targets locally as csv."""
+    def save_many(self, targets: Iterable[SQLTarget]) -> None:
+        """Save multiple targets locally as csv.
+
+        Unlique SQL storage, targets are separated between files to avoid massive
+        tables and potentially inefficient lookups.
+        """
+        grouped_targets: dict[Path, list[SQLTarget]] = defaultdict(list)
+
+        # Group targets by filename so that they can each be saved in one operation
         for target in targets:
-            self.save(target)
+            grouped_targets[target.filename] += [target]
 
-    def save_dir(self, target: SQLTarget) -> Path:
+        # Save each group of targets to a single csv file
+        for filename, target_list in grouped_targets.items():
+            self._check_path(filename)
+            save_path = self.save_path(filename)
+            current_df = pd.read_csv(save_path)
+            df: pd.DataFrame = pd.concat(
+                [current_df] + [target.as_df for target in target_list]
+            )
+            sorted_df = df.sort_values(by="creation_time")
+            sorted_df.to_csv(self.save_path(filename))
+
+    def save_path(self, filename: Path) -> Path:
         """Full path to table."""
-        return self._path / target.filename
+        return self.save_dir / Path(f"{filename}.csv")
 
-    def _check_path(self, target: SQLTarget):
-        """Check if the path exists, creating if not."""
-        if not self.save_dir(target).exists():
-            self._path.mkdir(parents=True)
+    def _check_path(self, filename: Path):
+        """Check if the path exists, create if not."""
+        if not self.save_path(filename).exists():
+            self.save_dir.mkdir(parents=True)
 
-    def _load_current(self, target: SQLTarget) -> pd.DataFrame:
+    def _load_current(self, filename: Path) -> pd.DataFrame:
         """Load the current version of the target."""
-        return pd.read_csv(self.save_dir / f"{self.target.filename}.csv")
+        return pd.read_csv(self.save_path(filename))
 
 
 @dataclass
-class SQLAlchemy(Saver):
+class SQLAlchemyDriver(Driver):
+    """Driver for saving targets to a SQL database via SQLAlchemy."""
+
     _engine: Engine
+
+    @classmethod
+    def from_config(cls, config: SQLAlchemyConfig) -> Self:
+        """Create a SQLAlchemy driver from a config."""
+        engine = create_engine(config.database_url)
+        return cls(engine)
 
     def save(self, target: SQLTarget) -> None:
         """Save a target to a SQL database."""
@@ -76,7 +112,7 @@ class SQLAlchemy(Saver):
             session.add(target)
             session.commit()
 
-    def save_many(self, targets: list[SQLTarget]) -> None:
+    def save_many(self, targets: Iterable[SQLTarget]) -> None:
         """Save multiple targets to a SQL database."""
         with Session(self._engine) as session:
             for target in targets:
@@ -85,40 +121,26 @@ class SQLAlchemy(Saver):
 
 
 @dataclass
-class SQLDriver:
+class MultiDriver:
     """Manager for saving files via engine(s)."""
 
-    engines: list[Engine]
-
-    def __post_init__(self):
-        """Finalize SQL model metadata."""
-        SQLModel.metadata.create_all(self.engines)
+    _drivers: list[Driver]
 
     @classmethod
-    def create(
-        cls, db_engines: list[str] | None, local_save_dir: Path | None = None
-    ) -> Self | None:
+    def create(cls, db_engine_configs: list[type[Driver]] | None) -> Self | None:
         """Create from engine names."""
-        if not db_engines:
-            return None
-        engines = []
-        if "local" in db_engines:
-            engines += [Local(local_save_dir)]
-            db_engines.remove("local")
-        engines += db_engines
+        drivers: list[Driver] = []
+        for config in db_engine_configs or []:
+            drivers += [config.from_config(config)]
 
-        return cls(engines)
-
-    def compute(self, engine: Engine, destination: Path | None) -> Path:
-        """Helper to use a default destination."""
-        return engine.destination or self.local_save_dir
+        return cls(drivers)
 
     def save(self, target: SQLTarget) -> None:
         """Save a single target to a destination."""
-        for engine in self.engines:
-            engine.save(target)
+        for saver in self._drivers:
+            saver.save(target)
 
-    def save_many(self, targets: Iterable[SQLTarget], destination) -> None:
+    def save_many(self, targets: Iterable[SQLTarget]) -> None:
         """Save multiple targets to a destination."""
-        for engine in self.engines:
-            engine.save_many(targets)
+        for saver in self._drivers:
+            saver.save_many(targets)

@@ -4,7 +4,7 @@ from src.settings import build_root as module
 class TestBuildRoot:
     """src.settings.build_root._BuildRoot."""
 
-    test_cls = module._BuildRoot
+    test_cls = module.BuildRoot
 
     def test_path(self):
         """src.settings.build_root.BuildRoot.path."""

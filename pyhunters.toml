@@ -1,3 +1,3 @@
 project = "PyHunters"
 team = "onion-heads"
-save_result = true
+version = "1.0.1"
