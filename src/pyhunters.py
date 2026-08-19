@@ -2,7 +2,8 @@ import atexit
 import inspect
 import logging
 from dataclasses import dataclass, field
-from functools import cached_property
+from datetime import datetime
+from functools import cached_property, partial
 from pathlib import Path
 from typing import Self
 
@@ -72,7 +73,7 @@ class PyHunters:
         """Get a dictionary mapping target names to targets."""
         return {target.name: target for target in self}
 
-    def add(self, target: PyTarget) -> Self:
+    def _add(self, target: PyTarget) -> Self:
         """Add a target to the collection."""
         self.targets += [target]
         logger.info(f"{LOG_PREFIX}: Successfully marked target: {target}")
@@ -84,40 +85,58 @@ class PyHunters:
         for driver in self.config.drivers:
             driver.save_many(self.targets)
 
-    def mark(self, name: str):
+    def mark(
+        self,
+        name: str,
+        project: str | None = None,
+        team: str | None = None,
+        version: str | None = None,
+    ):
         """Simple interface for marking a target."""
         caller = inspect.stack()[1]
-        module_path = Path(caller.filename)
+        module_path = Path(caller.filename).relative_to(Path.cwd())
 
         # increment the line number by '1' to grab the correct line
         line_no = caller.lineno + 1
-        mark_kwargs = {
-            "name": name,
-            "project": self._project,
-            "team": self._team,
-            "version": self._version,
-            "module_path": module_path,
-            "line_no": line_no,
-        }
+        project = project or self._project
+        team = team or self._team
+        version = version or self._version
+
+        partial_target = partial(
+            PyTarget,
+            name=name,
+            project=project,
+            team=team,
+            version=version,
+            module_path=module_path,
+            line_no=line_no,
+            creation_time=datetime.now(),
+        )
 
         def inner(func):
-            method_name = func.__name__
-            mark_kwargs["method_name"] = method_name
+            partial_with_method = partial(partial_target, method_name=func.__name__)
 
             def wrapper(*args, **kwargs):
                 """Inner actions within the method."""
-                mark_kwargs["args"] = args
-                mark_kwargs["kwargs"] = kwargs
+                partial_with_args = partial(
+                    partial_with_method, args=args, kwargs=kwargs
+                )
                 try:
                     returns = func(*args, **kwargs)
                 except Exception as exc:
-                    mark_kwargs["error"] = exc
-                    mark_kwargs["returns"] = None
-                    self.add(PyTarget(**mark_kwargs))
+                    self._add(
+                        partial_with_args(
+                            error=exc,
+                            returns=None,
+                        )
+                    )
                     raise exc
-                mark_kwargs["error"] = None
-                mark_kwargs["returns"] = returns
-                self.add(PyTarget(**mark_kwargs))
+                self._add(
+                    partial_with_args(
+                        error=None,
+                        returns=returns,
+                    )
+                )
                 return returns
 
             return wrapper

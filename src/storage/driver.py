@@ -10,6 +10,7 @@ import pandas as pd
 from sqlalchemy import Engine, create_engine
 from sqlmodel import Session
 
+from src.hunting_target.python import PyTarget
 from src.hunting_target.sql import SQLTarget
 from src.storage.config import LocalConfig, SQLAlchemyConfig
 
@@ -31,7 +32,7 @@ class Driver(ABC):
         """Save a target to the desired path."""
 
     @abstractmethod
-    def save_many(self, targets: Iterable[SQLTarget]) -> None:
+    def save_many(self, targets: Iterable[PyTarget | SQLTarget]) -> None:
         """Save multiple targets to the desired path."""
 
 
@@ -46,39 +47,47 @@ class LocalDriver(Driver):
         """Create a local DB driver from a config."""
         return cls(save_dir=config.save_dir)
 
-    def save(self, target: SQLTarget) -> None:
+    def save(self, target: PyTarget | SQLTarget) -> None:
         """Save a target locally as a csv.
 
         This is sort-of inefficient since we are duplicating read operations.
         """
-        self._check_path(target.filename)
-        current_df = self._load_current(target.filename)
-        combined_df = pd.concat([current_df, target.as_df])
-        sorted_df = combined_df.sort_values(by="creation_time")
-        sorted_df.to_csv(self.save_path(target.filename))
+        sql_target = (
+            SQLTarget.from_pytarget(target) if isinstance(target, PyTarget) else target
+        )
+        self._check_path(sql_target.filename)
+        current_df = self._load_current(sql_target.filename)
+        combined_df = pd.concat([current_df, sql_target.as_df])
+        combined_df.to_csv(self.save_path(sql_target.filename))
 
-    def save_many(self, targets: Iterable[SQLTarget]) -> None:
+    def save_many(self, targets: Iterable[PyTarget | SQLTarget]) -> None:
         """Save multiple targets locally as csv.
 
         Unlique SQL storage, targets are separated between files to avoid massive
         tables and potentially inefficient lookups.
         """
+        sql_targets: list[SQLTarget] = [
+            SQLTarget.from_pytarget(target) if isinstance(target, PyTarget) else target
+            for target in targets
+        ]
+
         grouped_targets: dict[Path, list[SQLTarget]] = defaultdict(list)
 
         # Group targets by filename so that they can each be saved in one operation
-        for target in targets:
+        for target in sql_targets:
             grouped_targets[target.filename] += [target]
 
         # Save each group of targets to a single csv file
         for filename, target_list in grouped_targets.items():
             self._check_path(filename)
-            save_path = self.save_path(filename)
-            current_df = pd.read_csv(save_path)
-            df: pd.DataFrame = pd.concat(
+            try:
+                current_df = self._load_current(filename)
+            except FileNotFoundError:
+                current_df = pd.DataFrame()
+            combined_df: pd.DataFrame = pd.concat(
                 [current_df] + [target.as_df for target in target_list]
             )
-            sorted_df = df.sort_values(by="creation_time")
-            sorted_df.to_csv(self.save_path(filename))
+            combined_df.to_csv(self.save_path(filename))
 
     def save_path(self, filename: Path) -> Path:
         """Full path to table."""
@@ -86,12 +95,12 @@ class LocalDriver(Driver):
 
     def _check_path(self, filename: Path):
         """Check if the path exists, create if not."""
-        if not self.save_path(filename).exists():
+        if not self.save_dir.exists():
             self.save_dir.mkdir(parents=True)
 
     def _load_current(self, filename: Path) -> pd.DataFrame:
         """Load the current version of the target."""
-        return pd.read_csv(self.save_path(filename))
+        return pd.read_csv(self.save_path(filename), index_col=0)
 
 
 @dataclass
@@ -112,7 +121,7 @@ class SQLAlchemyDriver(Driver):
             session.add(target)
             session.commit()
 
-    def save_many(self, targets: Iterable[SQLTarget]) -> None:
+    def save_many(self, targets: Iterable[PyTarget | SQLTarget]) -> None:
         """Save multiple targets to a SQL database."""
         with Session(self._engine) as session:
             for target in targets:
@@ -140,7 +149,7 @@ class MultiDriver:
         for saver in self._drivers:
             saver.save(target)
 
-    def save_many(self, targets: Iterable[SQLTarget]) -> None:
+    def save_many(self, targets: Iterable[PyTarget | SQLTarget]) -> None:
         """Save multiple targets to a destination."""
         for saver in self._drivers:
             saver.save_many(targets)

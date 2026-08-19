@@ -3,5 +3,5 @@ project = "PYHUNTERS.TOML - TEST PROJECT"
 team = "PYHUNTERS.TOML - TEST TEAM"
 version = "1.0.0"
 
-[[local]]
-path = "data"
+[local_driver]
+save_dir = "data"

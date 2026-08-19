@@ -199,10 +199,16 @@ class HuntingParty(metaclass=SingletonMeta):
             project=project,
             team=team,
             version=version,
-            local_driver=LocalDriver.from_config(local_driver)
+            local_driver=LocalDriver.from_config(
+                LocalConfig.model_validate(local_driver)
+            )
             if local_driver
             else None,
-            sql_driver=SQLAlchemyDriver.from_config(sql_driver) if sql_driver else None,
+            sql_driver=SQLAlchemyDriver.from_config(
+                SQLAlchemyConfig.model_validate(sql_driver)
+            )
+            if sql_driver
+            else None,
         )
 
     @classmethod
