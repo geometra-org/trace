@@ -4,4 +4,4 @@ team = "PYHUNTERS.TOML - TEST TEAM"
 version = "1.0.0"
 
 [local_driver]
-save_dir = "data"
+save_dir = "test_dir"

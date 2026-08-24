@@ -75,7 +75,7 @@ class Target(BaseModel):
     @cached_property
     def filename(self) -> Path:
         """File name for saving, omitting a suffix."""
-        return Path(f"{self.project}_{self.team}_{self.version}")
+        return Path(f"{self.project}_{self.team}")
 
     @property
     def error_raised(self) -> bool:

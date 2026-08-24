@@ -55,9 +55,9 @@ class LocalDriver(Driver):
         sql_target = (
             SQLTarget.from_pytarget(target) if isinstance(target, PyTarget) else target
         )
-        self._check_path(sql_target.filename)
+        self._check_save_dir()
         current_df = self._load_current(sql_target.filename)
-        combined_df = pd.concat([current_df, sql_target.as_df])
+        combined_df: pd.DataFrame = pd.concat([current_df, sql_target.as_df])
         combined_df.to_csv(self.save_path(sql_target.filename))
 
     def save_many(self, targets: Iterable[PyTarget | SQLTarget]) -> None:
@@ -79,11 +79,8 @@ class LocalDriver(Driver):
 
         # Save each group of targets to a single csv file
         for filename, target_list in grouped_targets.items():
-            self._check_path(filename)
-            try:
-                current_df = self._load_current(filename)
-            except FileNotFoundError:
-                current_df = pd.DataFrame()
+            self._check_save_dir()
+            current_df = self._load_current(filename)
             combined_df: pd.DataFrame = pd.concat(
                 [current_df] + [target.as_df for target in target_list]
             )
@@ -93,14 +90,17 @@ class LocalDriver(Driver):
         """Full path to table."""
         return self.save_dir / Path(f"{filename}.csv")
 
-    def _check_path(self, filename: Path):
-        """Check if the path exists, create if not."""
+    def _check_save_dir(self):
+        """Check if the save directory exists, create if not."""
         if not self.save_dir.exists():
             self.save_dir.mkdir(parents=True)
 
     def _load_current(self, filename: Path) -> pd.DataFrame:
         """Load the current version of the target."""
-        return pd.read_csv(self.save_path(filename), index_col=0)
+        try:
+            return pd.read_csv(self.save_path(filename), index_col=SQLTarget.INDEX_COL)
+        except FileNotFoundError:
+            return pd.DataFrame()
 
 
 @dataclass

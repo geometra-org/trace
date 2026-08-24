@@ -1,6 +1,7 @@
 import pickle
 import uuid
 from functools import cached_property
+from typing import ClassVar
 
 import pandas as pd
 from sqlmodel import ARRAY, JSON, Column, Field, SQLModel, String
@@ -13,6 +14,8 @@ __all__ = ["SQLTarget"]
 
 class SQLTarget(SQLModel, Target, table=True):  # type: ignore[call-arg]
     """A targetable, trackable object for comparison over time in storage."""
+
+    INDEX_COL: ClassVar[str] = "id"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
@@ -39,4 +42,4 @@ class SQLTarget(SQLModel, Target, table=True):  # type: ignore[call-arg]
     @cached_property
     def as_df(self) -> pd.DataFrame:
         """Return a pandas DataFrame representation of this target."""
-        return pd.DataFrame([self.model_dump()])
+        return pd.DataFrame([self.model_dump()]).set_index(self.INDEX_COL)
